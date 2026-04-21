@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Testing / caching
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# OS / build artifacts
+*.egg-info/
+dist/
+build/
+
+# Secrets / env files (none currently, but safe default)
+.env
+.env.local
+*.pem
+*.key
+
+# Optional: uncomment to exclude large raw fetches if they grow
+# data/raw/*.json
