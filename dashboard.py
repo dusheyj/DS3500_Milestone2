@@ -119,6 +119,15 @@ def build_app():
         fig = vl.create_ts(filt.drop_duplicates(dl.NCT_COL), dl.START_DATE_COL)
         return pn.pane.Plotly(fig, config={"responsive": True}, sizing_mode="stretch_width")
 
+    def animation_view(start, end, sp, ph, st):
+        filt = _filtered(start, end, sp, ph, st)
+        if filt.empty:
+            return pn.pane.Markdown("**No trials match these filters.**")
+        fig = vl.create_animation(
+            filt.drop_duplicates(dl.NCT_COL), dl.START_DATE_COL, dl.SPONSOR_TYPE_COL
+        )
+        return pn.pane.Plotly(fig, config={"responsive": True}, sizing_mode="stretch_width")
+
     def table_view(start, end, sp, ph, st):
         filt = _filtered(start, end, sp, ph, st)
         if filt.empty:
@@ -145,6 +154,7 @@ def build_app():
     phase_tab = pn.bind(phase_view, *widgets)
     status_tab = pn.bind(status_view, *widgets)
     ts_tab = pn.bind(timeseries_view, *widgets)
+    anim_tab = pn.bind(animation_view, *widgets)
     tbl_tab = pn.bind(table_view, *widgets)
 
     # ---- sidebar cards ----
@@ -186,6 +196,7 @@ def build_app():
         ("By phase", phase_tab),
         ("By status", status_tab),
         ("Over time", ts_tab),
+        ("Animation", anim_tab),
         ("Trial table", tbl_tab),
         active=0,  # sponsor type opens by default - it's my headline chart
     )

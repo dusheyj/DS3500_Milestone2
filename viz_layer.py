@@ -65,6 +65,56 @@ def create_ts(df, date_col):
     return fig
 
 
+def create_animation(df, date_col, group_col):
+    """animated bar chart - cumulative trial count by group_col as the
+    years tick forward. plotly's animation_frame does the work; the tricky
+    part is building a long-format df that has one row per (year, group)
+    with the CUMULATIVE count up to that year, so bars only grow."""
+    work = df.dropna(subset=[date_col]).copy()
+    work["year"] = pd.to_datetime(work[date_col], errors="coerce").dt.year
+    work = work.dropna(subset=["year"])
+    if work.empty:
+        return px.bar(title="No data for the current filters")
+    work["year"] = work["year"].astype(int)
+
+    years = sorted(work["year"].unique())
+    groups = sorted(work[group_col].dropna().astype(str).unique())
+
+    # one row per (year, group). counts = trials started that year.
+    per_year = (
+        work.assign(**{group_col: work[group_col].astype(str)})
+            .groupby(["year", group_col]).size()
+            .unstack(fill_value=0)
+            .reindex(index=years, columns=groups, fill_value=0)
+            .cumsum()  # cumulative so bars grow monotonically
+    )
+
+    plot_df = per_year.reset_index().melt(id_vars="year", var_name=group_col, value_name="count")
+
+    x_max = int(plot_df["count"].max()) if not plot_df.empty else 1
+    fig = px.bar(
+        plot_df,
+        x="count",
+        y=group_col,
+        orientation="h",
+        color=group_col,
+        animation_frame="year",
+        range_x=[0, x_max * 1.1 + 1],
+        title=f"Cumulative trials by {group_col} over time (press play)",
+        text="count",
+    )
+    fig.update_layout(
+        yaxis={"categoryorder": "total ascending"},
+        showlegend=False,
+        transition={"duration": 300},
+    )
+    # slow the default frame speed so viewers can actually read each year
+    if fig.layout.updatemenus:
+        fig.layout.updatemenus[0].buttons[0].args[1]["frame"]["duration"] = 600
+        fig.layout.updatemenus[0].buttons[0].args[1]["transition"]["duration"] = 300
+    return fig
+
+
 def create_status_bar(df, col_name):
     """status bar chart. this is a separate function from create_bar because
     i wanted to color terminated/withdrawn/suspended in red so the failure
